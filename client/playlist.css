@@ -1,5 +1,10 @@
-body { margin: 0; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; background-color: #ebe9f0; }
-main { display:flex; }
-nav { background: #ebe9f0; padding:1em; float: left; }
+body { font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; font-size: 2.5vh; background: #ebe9f0; }
+nav { padding:1em;
+  li { display: inline; }
+  li#refresh { background: #ff8383; }
+}
 ol { list-style:none; margin:0; padding:0; }
-li { cursor:pointer; background-color:#369; color:#fff; border-radius:0.5em; padding: 1em 2em; }
+li { cursor:pointer; background:#f3f2f6; color:#2c2a2a; border-radius:0.5em; margin: 0.5em; padding: 0.5em 0.8em; }
+input { font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; font-size: 3vh;  background:#ffffff; color:#2c2a2a; border-radius:0.5em; margin: 0.5em; padding: 0.5em 0.8em; width: 90%}
+p { margin: 0.5em; }
+.suggestion { background: #e8f1eb; }
