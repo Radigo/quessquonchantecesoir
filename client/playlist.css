@@ -1,10 +1,23 @@
 body { font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; font-size: 2.5vh; background: #ebe9f0; }
-nav { padding:1em;
-  li { display: inline; }
-  li#refresh { background: #ff8383; }
+* { margin: 0em; padding: 0em; }
+form {  }
+input {
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; font-size: 3vh;  background:#ffffff;
+  color:#2c2a2a; border-radius:0.5em;
 }
-ol { list-style:none; margin:0; padding:0; }
-li { cursor:pointer; background:#f3f2f6; color:#2c2a2a; border-radius:0.5em; margin: 0.5em; padding: 0.5em 0.8em; }
-input { font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; font-size: 3vh;  background:#ffffff; color:#2c2a2a; border-radius:0.5em; margin: 0.5em; padding: 0.5em 0.8em; width: 90%}
-p { margin: 0.5em; }
+nav {
+  position: sticky;
+  top: 0;
+  background: #ebe9f0;
+  li { display: inline-block; }
+  li#refresh { background: #ff8383; float: right; }
+}
+ol { list-style:none; margin: 0em; padding: 0em; }
+li {
+  background:#f3f2f6; color:#2c2a2a; border-radius:0.5em;
+  .title { display: inline-block; width: calc(100% - 5em); text-overflow: ellipsis;
+  overflow: hidden; white-space: nowrap; }
+  .checkMark { width: 2em; float: right; }
+  .addButton { width: 2em; float: right; background: #c9ded0; }
+}
 .suggestion { background: #e8f1eb; }

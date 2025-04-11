@@ -37,31 +37,34 @@ if (@$_GET["refresh"]) {
     </head>
     <body>
         <nav>
+            <form>
+                <input type="search" id="search" placeholder="Qu'est-ce qu'on chante ce soir ?">
+            </form>
+
             <ol id="menu">
-            <li id="showSongs" onClick="onClickSongs()">Songs</li>
-            <li id="showPlaylists" onClick="onClickPLaylists()">Playlists</li>
+            <li id="btnSongs" onClick="onClickSongs()">Songs</li>
+            <li id="btnPlaylists" onClick="onClickPLaylists()">Playlists</li>
             <li id="refresh" onClick="onClickRefresh()">↺</li>
             </ol>
         </nav>
 
-        <form action="/action_page.php">
-            <input type="search" id="search" placeholder="Qu'est-ce qu'on chante ce soir ?">
-        </form>
-
         <article id="main">
             <p>Tapez le nom d'une chanson pour l'ajouter à votre playlist.</p>
-            <p>Cliques sur "songs" pour consulter la liste complète (et trouver des idée ?)</p>
-            <p>Cliquez sur "playlists" pour gérer vos playlists</p>
+            <p>Cliquez sur "Songs" pour consulter la liste complète (et trouver des idée ?)</p>
+            <p>Cliquez sur "Playlists" pour gérer vos playlists</p>
             <p>Ne cliquez pas sur "refresh" toutes les 5mn</p>
         </article>
     </body>
     <script>
-        const numSubbestionsMax = 10;
+        const numSuggestionsMax = 10;
         var pageMode = "home";
+        var activePlaylist = null;
+
         // USER INPUTS //
+
         document.getElementById("search").addEventListener('input', function (evt) {
             if (pageMode === "playlists") {
-                // TODO
+                // TODO or nothing
             } else {
                 // Default
                 displaySongs();
@@ -75,14 +78,14 @@ if (@$_GET["refresh"]) {
         
         function onClickPLaylists() {
             pageMode = "playlists";
-            document.getElementById("main").innerHTML = "";
+            displayPlaylists();
         }
 
         function onClickRefresh() {
             window.location.href = '?refresh=1';
         }
 
-        // FILTER (test) //
+        // FILTER //
 
         /** A result near 1 is a perfect match, near 0 is a poor match */
         function stringSimilarity(strToken, strTest, caseSensitive = false) {
@@ -119,6 +122,10 @@ if (@$_GET["refresh"]) {
             return (match * 2) / (strToken.length - ((substringLength - 1) * 2));
         }
 
+        function isInPlaylistAlready(songData) {
+            return true;
+        }
+
         // DISPLAY //
         function displaySongs() {
             // Refresh main
@@ -132,55 +139,134 @@ if (@$_GET["refresh"]) {
                 // Evaluate difference between search input value and entry name
                 const searchToken = document.getElementById("search").value.toLowerCase();
 
-                if (searchToken !== "" && songData.name.toLowerCase().match(searchToken)) {
+                if (searchToken === "" || songData.name.toLowerCase().match(searchToken)) {
                     filteredSongs.push(songData);
                 }
 
-                console.log(searchToken, songData.name);
-                console.log(stringSimilarity(searchToken, songData.name));
+                //console.log(searchToken, songData.name);
+                //console.log(stringSimilarity(searchToken, songData.name));
 
                 // If there is just a few differences we put the entry in a secondary list for suggestions
                 if ((stringSimilarity(searchToken, songData.name) > 0.5)
                     && !filteredSongs.includes(songData)
-                    && suggestedSongs.length < numSubbestionsMax) {
+                    && suggestedSongs.length < numSuggestionsMax) {
                     suggestedSongs.push(songData);
                 }
             }
 
-            console.log(filteredSongs);
-            console.log(suggestedSongs);
+            //console.log(filteredSongs);
+            //console.log(suggestedSongs);
 
             var resultSongs = document.createDocumentFragment();
             for (const filteredSong of filteredSongs) {
-                var newEntry = document.createElement("li");
-
-                newEntry.data_path = filteredSong.path;
-                newEntry.data_name = filteredSong.name;
-                newEntry.classList.add("result");
-                newEntry.appendChild(document.createTextNode(filteredSong.name));
-                newEntry.addEventListener("click", function() {
-                    clickOnSong(filteredSong.path);
-                });
-                resultSongs.appendChild(newEntry);
+                resultSongs.appendChild(createSongEntry(filteredSong, false));
             }
             
             for (const suggestedSong of suggestedSongs) {
-                var newEntry = document.createElement("li");
-
-                newEntry.data_path = suggestedSong.path;
-                newEntry.data_name = suggestedSong.name;
-                newEntry.classList.add("suggestion");
-                newEntry.appendChild(document.createTextNode(suggestedSong.name));
-                newEntry.addEventListener("click", function() {
-                    clickOnSong(suggestedSong.path);
-                });
-                resultSongs.appendChild(newEntry);
+                resultSongs.appendChild(createSongEntry(suggestedSong, true));
             }
 
             document.getElementById("main").appendChild(resultSongs);
         }
 
+        function createSongEntry(songData, isSuggestion) {
+            var newEntry = document.createElement("li");
+            // Data
+            newEntry.data_path = songData.path;
+            newEntry.data_name = songData.name;
+            // Overall style
+            if (isSuggestion) {
+                newEntry.classList.add("suggestion");
+            } else {
+                newEntry.classList.add("result");
+            }
+
+            // Content
+            var title = document.createElement("div");
+            title.appendChild(document.createTextNode(songData.name));
+            title.classList.add("title");
+            newEntry.appendChild(title);
+
+            if (isInPlaylistAlready(songData)) {
+                var checkMark = document.createElement("div");
+                checkMark.appendChild(document.createTextNode("V"));
+                checkMark.classList.add("checkMark");
+                newEntry.appendChild(checkMark);
+            }
+
+            // Actions
+            var addButton = document.createElement("div");
+            addButton.appendChild(document.createTextNode("+"));
+            addButton.classList.add("addButton");
+            newEntry.appendChild(addButton);
+
+            return (newEntry);
+        }
+
+        /** Retrieve only the list of files, no parsing whatsoever here */
+        function displayPlaylists() {
+            // Refresh main
+            document.getElementById("main").innerHTML = "";
+
+            var playlistEntries = document.createDocumentFragment();
+            for (const path of playlistsJson) {
+                playlistEntries.appendChild(createPlaylistEntry(path));
+            }
+
+            document.getElementById("main").appendChild(playlistEntries);
+        }
+
+        /** Set a playlist as active, any ADD song will be put there */
+        function selectPlaylist(playlist) {
+            console.log("select playlist:", playlist);
+            // Create an object to add songs to
+            activePlaylist = {};
+            playlistFile = new File([], playlist);
+
+            // Read from file
+            var reader = new FileReader();
+            reader.onload = function(progressEvent) {
+                console.log(playlistFile.name);
+                console.log(reader.result);
+                console.log(reader.error);
+
+                // By lines
+                var lines = reader.result.split('\n');
+                for (var line = 0; line < lines.length; line++) {
+                    console.log(lines[line]);
+                }
+            };
+            reader.readAsText(playlistFile);
+
+            document.getElementById("btnPlaylists").textContent = activePlaylist.title;
+        }
+
+        function createPlaylistEntry(playlistPath) {
+            var newEntry = document.createElement("li");
+            // Data
+            newEntry.data_path = playlistPath;
+            newEntry.data_name = playlistPath;
+
+            // Content
+            var title = document.createElement("div");
+            title.appendChild(document.createTextNode(playlistPath));
+            title.classList.add("title");
+            newEntry.appendChild(title);
+
+            // Actions
+            var addButton = document.createElement("div");
+            addButton.appendChild(document.createTextNode("Select"));
+            addButton.classList.add("selectButton");
+            addButton.addEventListener('click', function (evt) {
+                selectPlaylist(newEntry.data_path);
+            });
+            newEntry.appendChild(addButton);
+
+            return newEntry
+        }
+
         // MAIN //
         var dbJson = <?php echo $dbJson; ?>;
+        var playlistsJson = <?php echo json_encode(getPlaylists()); ?>;
     </script>
 </HTML>

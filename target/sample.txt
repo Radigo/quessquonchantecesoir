@@ -1,0 +1,8 @@
+######################################
+#Ultrastar Deluxe Playlist Format v1.0
+#Playlist SamplePlayList with 2 Songs.
+######################################
+Name: SamplePlayList
+Songs:
+Hatsune Miku : Ievan Polkka
+Ricchi & Poveri : Sarà perché ti amo

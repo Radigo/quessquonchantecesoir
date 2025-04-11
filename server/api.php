@@ -1,11 +1,8 @@
 <?php
-//$photosDir = "srcPhotos";
-//$thumbsDir = "thumbs";
 $songsPath = "/home/jean/Sync/UltraStar/songs";
+$playlistsPath = "../target/";
 $dbFile = "db.json";
 $verbose = false;
-
-//$supportedExtensions = [".jpg", ".JPG", ".png", ".PNG"];
 
 // Parsing
 function parseDir($forceScan, $limit, $verbose) {
@@ -85,38 +82,81 @@ function getDirContents($dir, &$songsList, &$limit) {
     }
 }
 
-function oldDirGetContents() {
-    if (!is_dir($path)) {
-        if (isSong($path)) {
-            # Target example:
-                
-            #    ######################################
-            #    #Ultrastar Deluxe Playlist Format v1.0     <- rename this for fun
-            #    #Playlist TataList with 2 Songs.           <- Change this for fun too
-            #    ######################################
-            #    #Name: TataList                            <- Get the name from client choice
-            #    #Songs:                                    <- static required
-            #    Hatsune Miku : Ievan Polkka
-            #    Ricchi & Poveri : Sarà perché ti amo
-
-            # Look for #TITLE and #ARTIST fields in txt file of each folder
-            # #ARTIST : #TITLE 
-
-            array_push($filesList, $publicPath);
-
-            // Create thumbnail
-            if ($GLOBALS["verbose"]) echo $limit." - creating thumbnail of ".$path." @ ". $GLOBALS["thumbsDir"]."\n";
-            
-            $limit--;
-            if ($limit == 0) {
-                return;
-            }
-        } else {
-            // Ignore
-            if ($GLOBALS["verbose"]) echo("ignored file ".$path."\n");
+function getPlaylists() {
+    $playlists = [];
+    
+    $files = scandir($GLOBALS["playlistsPath"]);
+    foreach ($files as $key => $value) {
+        if (is_dir($value)) {
+            continue;
         }
-    } else if ($value != "." && $value != ".." && $value != ".stfolder") {
-        array_push($dirList, $publicPath);
-        getDirContents($path, $dirList, $filesList, $limit);
+
+        array_push($playlists, $GLOBALS["playlistsPath"].$value);
+    }
+
+    return $playlists;
+}
+
+/*
+function readPlaylist($playlistPath) {
+    $playlistData = new stdClass;
+
+    //$plStr = file_get_contents($playlistPath);
+    $handle = fopen($playlistPath, "r");
+
+    $isListingSongs = false;
+
+    while (($line = fgets($handle)) !== false) {
+        $line = rtrim($line, "\r\n");
+        if (strpos($line, "Name:") === 0) {
+            $playlistData->name = substr($line, 6);
+            continue;
+        } else if (strpos($line, "Songs:") === 0) {
+            $isListingSongs = true;
+            $playlistData->songs = [];
+            continue;
+        }
+
+        if ($isListingSongs) {
+            $songData = new stdClass;
+            $songData->artist = substr($line, 0, strpos($line, " : "));
+            $songData->title = substr($line, strpos($line, " : ") + 3);
+            array_push($playlistData->songs, $songData);
+        }
+    }
+
+    return $playlistData;
+}
+*/
+
+/** Commit playlist to target */
+function writePlaylist($playlistData) {
+    $content = "";
+
+    // HEADER //
+    $content .= "######################################\n";
+    $content.= "#Ultrastar Deluxe Playlist Format v1.0\n";
+    $content.= "#Playlist ".$playlistData->name." with ".count($playlistData->songs)." Songs.\n";
+    $content.= "######################################\n";
+    $content.= "#Name: ".$playlistData->name."\n";
+    // SONGS //
+    $content.= "#Songs:\n";
+    foreach ($playlistData->songs as $key => $song) {
+        $content.= $song->artist." : ".$song->title."\n";//< ok if we don't process the song data
     }
 }
+
+
+# Target example:
+
+#    ######################################
+#    #Ultrastar Deluxe Playlist Format v1.0     <- rename this for fun
+#    #Playlist TataList with 2 Songs.           <- Change this for fun too
+#    ######################################
+#    #Name: TataList                            <- Get the name from client choice
+#    #Songs:                                    <- static required
+#    Hatsune Miku : Ievan Polkka
+#    Ricchi & Poveri : Sarà perché ti amo
+
+# Look for #TITLE and #ARTIST fields in txt file of each folder
+# #ARTIST : #TITLE 
